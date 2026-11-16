@@ -1,13 +1,18 @@
-from slopmachine.embedding import EmbeddingModel, TokenizerOutput, EmbeddingModelLoader
 import os
 from tokenizers import Tokenizer, Encoding
 from onnxruntime import InferenceSession
 import numpy as np
+from typing import NamedTuple
 
-__all__ = ["RuriV3_130M_Int8"]
+__all__ = ["RuriV3_130M_Int8", "_TokenizerOutput"]
 
 
-class RuriV3_130M_Int8(EmbeddingModel, EmbeddingModelLoader):
+class _TokenizerOutput(NamedTuple):
+    input_ids: np.ndarray
+    attention_mask: np.ndarray
+
+
+class RuriV3_130M_Int8:
     def __init__(
         self,
         /,
@@ -24,16 +29,16 @@ class RuriV3_130M_Int8(EmbeddingModel, EmbeddingModelLoader):
 
         self.__encoder = InferenceSession(str(model_path))
 
-    async def __aenter__(self) -> EmbeddingModel:
+    async def __aenter__(self) -> "RuriV3_130M_Int8":
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         pass
 
-    async def tokenize(self, text: list[str]) -> TokenizerOutput:
+    async def tokenize(self, text: list[str]) -> _TokenizerOutput:
         encoded: list[Encoding] = await self.__tokenizer.async_encode_batch(text)
 
-        return TokenizerOutput(
+        return _TokenizerOutput(
             input_ids=np.array([e.ids for e in encoded], dtype=np.int64),
             attention_mask=np.array(
                 [e.attention_mask for e in encoded], dtype=np.int64
