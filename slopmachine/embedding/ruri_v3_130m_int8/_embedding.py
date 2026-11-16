@@ -35,6 +35,10 @@ class RuriV3_130M_Int8:
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         pass
 
+    async def __call__(self, text: list[str]) -> np.ndarray:
+        tokenized = await self.tokenize(text)
+        return await self.encode(tokenized.input_ids, tokenized.attention_mask)
+
     async def tokenize(self, text: list[str]) -> _TokenizerOutput:
         encoded: list[Encoding] = await self.__tokenizer.async_encode_batch(text)
 
